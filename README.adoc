@@ -140,8 +140,6 @@ This process is applied prior to hashing of the byte string representing the mem
 Since normalisation would require additional dependencies, it is recommended that applications do the required NPSS proces, or at least make sure the password source produces normalized strings and reject non-stable codepoints.
 The algorithm described here will preserve any normalisation.
 
-The trim() function 
-
 .Step 2: Conditioning
 
 The second stept is to conditon the password. The idea here is to allow infrastructure to do this step early (before sending the passwords to authentication servers).
