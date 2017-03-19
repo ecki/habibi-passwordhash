@@ -1,16 +1,55 @@
 = Habibi a PBKDF2 based password hash format
+Bernd Eckenfels
+v0.1, 2017-03-19
+:description: Draf Specification for a password hashing format based on PBKDF2 with conditioning and peppering.
+:!compat-mode:
+:keywords: password-hash, security, specification, PBKDF2, HMAC, SHA-3, SHA-3
+:page-description: {description}
+:page-keywords: {keywords}
+:icons: font
+:idprefix:
+:idseparator:
+:sectanchors:
+:mdash: &#8212;
 
-*This is a draft, sent your comments to bernd-2017 (@) eckenfels.net*
+{description}
 
-While there are password hash formats like BCRYPT (`$2y$`) or SCRYPT (`$scrypt$`) or the new winner of the password hash competition Argon (`$argon`) password hashes
-based on PBKDF2 are still in high demand. The main reason for this is, that NIST endorses PBKDF2 with HMAC and endorsed hash function in SP 800-132 as well as the
-draft for the upcoming NIST Special Publication 800ญ63B _Digital Identity Guidelines: Authentication and Lifecycle Management_ (which is not very clear on the details
-but asks for aproved hashes and seperately stored secrets).
+.Draft
+****
+This document is only a draft.
+These recommendations are not doctrine and are subject to change.
+Sent your comments to bernd-2017 (@) eckenfels.net*
+****
 
-This repository collects the definition for a interoperable password hash format based on PBKDF2. The format is intentionally restricted in variations
-as it can easily be replaced by a new prefix instead of making the parsing and generation too complex.
+== Introduction
 
-== Properties
+Password hashes based on PBKDF2 are still in high demand.
+The main reason for this is, that NIST endorses PBKDF2 with HMAC and endorsed hash function in SP 800-132 as well as the draft for the upcoming NIST Special Publication 800-63B _Digital Identity Guidelines: Authentication and Lifecycle Management_ (which is not very clear on the details but asks for aproved hashes and seperately stored secrets).
+
+This repository collects the definition for a interoperable password hash format based on PBKDF2.
+The format is intentionally restricted in variations as it can easily be replaced by a new prefix instead of making the parsing and generation too complex.
+
+=== Alternatives
+
+There are many advanced password hashing schemes out there, this specification does not try to compete.
+If you are looking for a memory-hard alternative you are much better off with https://www.tarsnap.com/scrypt.html[_scrypt_] or https://password-hashing.net/#argon2[_ARGON2_].
+If you look for a alternative with a wide range of operating system support https://en.wikipedia.org/wiki/Bcrypt[_bcrypt_] is probably your friend, since none of the normal password hashing schemes supported by unixoide `crypt()` have a comparable resistance against brute-forcing.
+However if you care for approved cryptographic methods and some form of standards endoresement, then _PBKDF2_ is probably your best friend.
+
+=== Password Securiy
+
+The fact that this is a pretty current specification is by no means an endorsemet for password based authentication.
+Memorized secets have all kinds of issues in practice wich makes them a huge security problem.
+So consider alternatives or multple factors if you care for the security of your service and your users.
+However since passwords cannot fully be avoided, you at least should store them with some level of protection.
+
+Password hashing can not defend about overly weak passwords.
+You should enfore a minimum complexity aproperiate for your service.
+Since you are here for the conformance to NIST you should go all the way and follow the new _Special Publication 800-63-3: Digital Authentication Guidelines and related documents_: minimum length of passwords should be 8 ASCII or Unicode characters with no composition rules.
+You can read this https://www.cisoadvisory.com/cai-blog/2016/10/24/nist-proposes-new-approach-to-passwords[summary].
+Make sure to check for dictionary passwords.
+
+== Properties of this Scheme 
 
 * Uses PBKDF2 (https://tools.ietf.org/html/rfc2898#section-5.2[RFC 2898]) with HMac (https://tools.ietf.org/html/rfc2104[RFC 2104])
 ** Specifies a variant with SHA2-512 (FIPS 180-4 Section 6.2 - 6.5, https://tools.ietf.org/html/rfc6234[RFC 6234])
@@ -19,6 +58,18 @@ as it can easily be replaced by a new prefix instead of making the parsing and g
 * Requires UTF-8 encoding
 * Features a pre-conditioning step
 * Allows for pepper (seperately stored key)
+
+== Preconditioning
+
+In a distributed system with front-end servers and authenticated servers it is useful if some protections of the password can be done early.
+If this does not require a salt to be known/retrieved or access to hardware-secured secrets then this a win.
+It also means the early erradication of clear-text (even in memory) opens a number of new applications like cashing the password checking outcome.
+The later is especially good in environments where stateless services (with tokens or re-authentication) is used.
+
+In the current draft the underlying hash function is used, as this blends well into the normal preconditioning required for HMAC keys which are longer than the blocksize.
+However this is up for discusion: should a faster/different method be used?
+(Facebook seems to use a MD5 hash as the outer layer of their password protection).
+Using a fast and simple hash like MD5 has the advantage that it could be done even in Javascript.
 
 == String Format 
 
@@ -44,7 +95,7 @@ The validation step compares the given bytes starting from the left.
 
 With this rules the total length of the password verifier is between 34 and 171 characters.
 
-Using the prefix `{pbkdf2s2}` and `{pbkdf2s3}` instead of `$pbkdf2s2$` and `$pbkdf2s3ง` is allowed in scenrios like LDAP attributes which prefer this syntax.
+Using the prefix `{pbkdf2s2}` and `{pbkdf2s3}` instead of `$pbkdf2s2$` and `$pbkdf2s3ยง` is allowed in scenrios like LDAP attributes which prefer this syntax.
 
 == Algorithm
 
@@ -109,7 +160,7 @@ The result will be serialized in PHC format with the following method:
 	param1 = (t!=20000) ? "t=" + t : ""
 	param2 = (keyid!=null) ? "keyid=" + B64(keyid) : ""
 	if (param1 != "" || param2 != "")
-	  param = "ง"
+	  param = "ยง"
 	  if (param1 != "")
 	    param += param1
 	    if (param2 != "")
