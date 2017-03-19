@@ -2,17 +2,21 @@
 
 *This is a draft, sent your comments to bernd-2017 (@) eckenfels.net*
 
-While there are password hash formats like BCRYPT (`$2y$`) or SCRYPT (`$scrypt$`) or the new winner of the password hash competition Aragon (`$argon`) password hashes
-based on PBKDF2 are still in high demand. The main reason for this is, that NIST endorses PBKDF2 with HMAC and endorsed hash function in SP 800
+While there are password hash formats like BCRYPT (`$2y$`) or SCRYPT (`$scrypt$`) or the new winner of the password hash competition Argon (`$argon`) password hashes
+based on PBKDF2 are still in high demand. The main reason for this is, that NIST endorses PBKDF2 with HMAC and endorsed hash function in SP 800-132 as well as the
+draft for the upcoming NIST Special Publication 800­63B _Digital Identity Guidelines: Authentication and Lifecycle Management_ (which is not very clear on the details
+but asks for aproved hashes and seperately stored secrets).
 
 This repository collects the definition for a interoperable password hash format based on PBKDF2. The format is intentionally restricted in variations
 as it can easily be replaced by a new prefix instead of making the parsing and generation too complex.
 
 == Properties
 
-* Uses PBKDF2 (RFC xxxx) with HMac (RFC xxxx) and SHA2 512.
-* Supports variable number of iterations and salt bytes
-* Specifies UTF-8 encoding for the bytes
+* Uses PBKDF2 (https://tools.ietf.org/html/rfc2898#section-5.2[RFC 2898]) with HMac (https://tools.ietf.org/html/rfc2104[RFC 2104])
+** Specifies a variant with SHA2-512 (FIPS 180-4 Section 6.2 - 6.5, https://tools.ietf.org/html/rfc6234[RFC 6234])
+** Specifies a variant with SHA3-512 (FIPS 202)
+* Supports variable number of iterations, salt bytes and output bytes
+* Requires UTF-8 encoding
 * Features a pre-conditioning step
 * Allows for pepper (seperately stored key)
 
@@ -48,6 +52,7 @@ Using the prefix `{pbkdf2s2}` and `{pbkdf2s3}` instead of `$pbkdf2s2$` and `$pbk
 
 The first function is to convert the text password into bytes. This must be done using the UTF-8 encoding. It should NOT remove consecutive blanks.
 Leading and Trailing blanks must be removed. Implementations may reject passwords longer than 128 codepoints but should never silently truncate the input.
+The implementation must reject passwords containing a NUL char (U+0000).
 
    passwordBytes = utf8encode(trim(passwordString))
   
